@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-ROOT_DIR=$(pwd)
 PYTHON_VENV_VERSION=${PYTHON_VENV_VERSION:-"python3.6"}
 PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-."virtualenv"}
 PYTHON_REQUIREMENTS_MD5=$PYTHON_VENV_DIR/requirements.md5
