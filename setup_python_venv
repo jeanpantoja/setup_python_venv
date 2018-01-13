@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+ROOT_DIR=$(pwd)
+PYTHON_VENV_VERSION=${PYTHON_VENV_VERSION:-"python3.6"}
+PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-."virtualenv"}
+PYTHON_REQUIREMENTS_MD5=$PYTHON_VENV_DIR/requirements.md5
+PYTHON_REQUIREMENTS_LIST=$PYTHON_VENV_DIR/requirements.lst
+
+sort_args()
+{
+    local args=$*
+    echo $args | tr " " "\n" | sort | tr "\n" " "
+}
+
+create_requirements_list()
+{
+    local requirements_list=$*
+
+    echo $requirements_list > $PYTHON_REQUIREMENTS_LIST
+}
+
+create_requirements_md5()
+{
+    local requirements_list=$*
+
+    create_requirements_list $requirements_list
+    cp $requirements_list $PYTHON_VENV_DIR
+
+    md5sum $PYTHON_REQUIREMENTS_LIST > $PYTHON_REQUIREMENTS_MD5
+
+    for f in $requirements_list;
+    do
+        md5sum $PYTHON_VENV_DIR/$f >> $PYTHON_REQUIREMENTS_MD5
+    done
+}
+
+check_requirements_md5()
+{
+    local requirements_list=$*
+
+    create_requirements_list $requirements_list
+    cp $requirements_list $PYTHON_VENV_DIR
+
+    echo "Checking python requirements"
+
+    md5sum -c $PYTHON_REQUIREMENTS_MD5
+    md5_result=$?
+    echo " "
+    return $md5_result
+}
+
+assert_python()
+{
+    $PYTHON_VENV_VERSION -V > /dev/null 2>&1 ||
+    {
+        echo "$PYTHON_VENV_VERSION is required"
+        exit 1
+    }
+}
+
+assert_virtualenv()
+{
+    virtualenv --version > /dev/null 2>&1 ||
+    {
+        echo "virtualenv is required"
+        exit 1
+    }
+}
+
+assert_files_exists()
+{
+    files=$*
+
+    for file in $files;
+    do
+        [ ! -f $file ] &&
+        {
+            echo "File ${file} not exists"
+            exit 1
+        }
+    done
+}
+
+build_python_venv()
+{
+    local requirements_list=$*
+
+    rm -rf $PYTHON_VENV_DIR
+
+    assert_python
+    assert_virtualenv
+
+    virtualenv -p python3.6 $PYTHON_VENV_DIR
+    source $PYTHON_VENV_DIR/bin/activate
+
+    for requirements in $requirements_list;
+    do
+        pip install -r $requirements
+    done
+
+    create_requirements_md5 $requirements_list
+}
+
+setup_python_venv()
+{
+    local requirements_list=$(sort_args $*)
+
+    [  ! -d $PYTHON_VENV_DIR ] &&
+    {
+        echo "Building python virtual enviroment."
+        build_python_venv $requirements_list
+    } ||
+    {
+        check_requirements_md5 $requirements_list ||
+        {
+            echo "Re-building python virtual. Enviroment requirements changed."
+            build_python_venv $requirements_list
+        }
+    }
+
+    return "0"
+}
+
+# Main script
+
+[ "$#" -lt "1" ] &&
+{
+    echo "Usage: ${0} requirement_file ..."
+    echo ""
+    echo "    At the first call the virtual environment will be build."
+    echo "    Subsequent calls will update the environment if needed."
+    echo ""
+    echo "    System variables:"
+    echo "        PYTHON_VENV_DIR: Set to define the directory to build"
+    echo "        the virtual environment. default=.virtualenv"
+
+    exit 1
+}
+
+assert_files_exists $*
+setup_python_venv $*
