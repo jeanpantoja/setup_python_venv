@@ -136,5 +136,10 @@ setup_python_venv()
     exit 1
 }
 
-assert_files_exists $*
-setup_python_venv $*
+main()
+{
+    assert_files_exists $*
+    setup_python_venv $*
+}
+
+main $*
