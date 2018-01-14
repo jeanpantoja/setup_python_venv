@@ -8,7 +8,7 @@ PYTHON_REQUIREMENTS_LIST=$PYTHON_REQUIREMENTS_DIR/"requirements.lst"
 
 requirements_file_dest_name()
 {
-    local requirements_file=$1
+    local requirements_file="$1"
 
     local fullname="$(realpath $requirements_file)"
     echo "${PYTHON_REQUIREMENTS_DIR}${fullname}"
@@ -16,43 +16,36 @@ requirements_file_dest_name()
 
 save_requirements()
 {
-    local requirements_list=$*
+    realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST"
 
-    realpath $requirements_list | sort > $PYTHON_REQUIREMENTS_LIST
-
-    for requirements in $requirements_list;
+    for requirements in "$@";
     do
         local name="$(requirements_file_dest_name $requirements)"
         mkdir -p "$(dirname $name)"
-        cp $requirements $name
+        cp "$requirements" "$name"
     done
 }
 
 create_requirements_md5()
 {
+    save_requirements "$@"
 
-    local requirements_list=$*
+    md5sum "$PYTHON_REQUIREMENTS_LIST" > "$PYTHON_REQUIREMENTS_MD5"
 
-    save_requirements $requirements_list
-
-    md5sum $PYTHON_REQUIREMENTS_LIST > $PYTHON_REQUIREMENTS_MD5
-
-    for requirements in $requirements_list;
+    for requirements in "$@";
     do
         local name="$(requirements_file_dest_name $requirements)"
-        md5sum $name >> $PYTHON_REQUIREMENTS_MD5
+        md5sum "$name" >> "$PYTHON_REQUIREMENTS_MD5"
     done
 }
 
 check_requirements_md5()
 {
-    local requirements_list=$*
-
-    save_requirements $requirements_list
+    save_requirements "$@"
 
     echo "Checking python requirements"
 
-    md5sum -c $PYTHON_REQUIREMENTS_MD5
+    md5sum -c "$PYTHON_REQUIREMENTS_MD5"
     local md5_result=$?
     echo " "
     return $md5_result
@@ -60,7 +53,7 @@ check_requirements_md5()
 
 assert_python()
 {
-    $PYTHON_VENV_VERSION -V > /dev/null 2>&1 ||
+    "$PYTHON_VENV_VERSION" -V > /dev/null 2>&1 ||
     {
         echo "$PYTHON_VENV_VERSION is required"
         exit 1
@@ -78,11 +71,9 @@ assert_virtualenv()
 
 assert_files_exists()
 {
-    local files=$*
-
-    for file in $files;
+    for file in "$@";
     do
-        [ ! -f $file ] &&
+        [ ! -f "$file" ] &&
         {
             echo "File ${file} not exists"
             exit 1
@@ -92,39 +83,35 @@ assert_files_exists()
 
 build_python_venv()
 {
-    local requirements_list=$*
-
-    rm -rf $PYTHON_VENV_DIR
-    mkdir -p $PYTHON_REQUIREMENTS_DIR
+    rm -rf "$PYTHON_VENV_DIR"
+    mkdir -p "$PYTHON_REQUIREMENTS_DIR"
 
     assert_python
     assert_virtualenv
 
-    virtualenv -p python3.6 $PYTHON_VENV_DIR
-    source $PYTHON_VENV_DIR/bin/activate
+    virtualenv -p python3.6 "$PYTHON_VENV_DIR"
+    source "$PYTHON_VENV_DIR/bin/activate"
 
-    for requirements in $requirements_list;
+    for requirements in "$@";
     do
-        pip install -r $requirements
+        pip install -r "$requirements"
     done
 
-    create_requirements_md5 $requirements_list
+    create_requirements_md5 "$@"
 }
 
 setup_python_venv()
 {
-    local requirements_list=$*
-
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
         echo "Building python virtual enviroment."
-        build_python_venv $requirements_list
+        build_python_venv "$@"
     } ||
     {
-        check_requirements_md5 $requirements_list ||
+        check_requirements_md5 "$@" ||
         {
             echo "Re-building python virtual. Enviroment requirements changed."
-            build_python_venv $requirements_list
+            build_python_venv "$@"
         }
     }
 
@@ -150,10 +137,9 @@ setup_python_venv()
 
 main()
 {
-    local requirements_list=$*
-
-    assert_files_exists $requirements_list
-    setup_python_venv $requirements_list
+    assert_files_exists "$@"
+    setup_python_venv "$@"
 }
 
-main $*
+main "$@"
+
