@@ -5,12 +5,6 @@ PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-."virtualenv"}
 PYTHON_REQUIREMENTS_MD5=$PYTHON_VENV_DIR/requirements.md5
 PYTHON_REQUIREMENTS_LIST=$PYTHON_VENV_DIR/requirements.lst
 
-sort_args()
-{
-    local args=$*
-    echo $args | tr " " "\n" | sort | tr "\n" " "
-}
-
 create_requirements_list()
 {
     local requirements_list=$*
@@ -102,7 +96,7 @@ build_python_venv()
 
 setup_python_venv()
 {
-    local requirements_list=$(sort_args $*)
+    local requirements_list=$*
 
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
@@ -138,8 +132,11 @@ setup_python_venv()
 
 main()
 {
-    assert_files_exists $*
-    setup_python_venv $*
+    local requirements_list=$*
+
+    requirements_list="$(realpath $requirements_list | sort)"
+    assert_files_exists $requirements_list
+    setup_python_venv $requirements_list
 }
 
 main $*
