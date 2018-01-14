@@ -18,7 +18,7 @@ save_requirements()
 {
     local requirements_list=$*
 
-    echo $requirements_list > $PYTHON_REQUIREMENTS_LIST
+    realpath $requirements_list | sort > $PYTHON_REQUIREMENTS_LIST
 
     for requirements in $requirements_list;
     do
@@ -152,7 +152,6 @@ main()
 {
     local requirements_list=$*
 
-    requirements_list="$(realpath $requirements_list | sort)"
     assert_files_exists $requirements_list
     setup_python_venv $requirements_list
 }
