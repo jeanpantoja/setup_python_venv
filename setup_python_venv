@@ -198,7 +198,6 @@ build_python_venv()
     assert_virtualenv
 
     virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR"
-    source "$PYTHON_VENV_DIR/bin/activate"
 
     local pip_quiet="--quiet"
 
@@ -210,7 +209,7 @@ build_python_venv()
     for requirements in "$@";
     do
         echo -e "${TEXT}Installing ${requirements}${NOCOLOR}"
-        pip install ${pip_quiet} -r "$requirements"
+        "$PYTHON_VENV_DIR/bin/pip" install ${pip_quiet} -r "$requirements"
     done
 
     save_requirements_md5 "$@"
