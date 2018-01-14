@@ -29,7 +29,7 @@ create_requirements_md5()
 
     for f in $requirements_list;
     do
-        md5sum $PYTHON_VENV_DIR/$f >> $PYTHON_REQUIREMENTS_MD5
+        md5sum $PYTHON_VENV_DIR/$(basename $f) >> $PYTHON_REQUIREMENTS_MD5
     done
 }
 
