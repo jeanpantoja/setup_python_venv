@@ -139,6 +139,7 @@ setup_python_venv()
     echo ""
     echo "    At the first call the virtual environment will be build."
     echo "    Subsequent calls will update the environment if needed."
+    echo "    The virtual environment will be created at .virtualenv folder"
     echo ""
     echo "    System variables:"
     echo "        PYTHON_VENV_DIR: Set to define the directory to build"
