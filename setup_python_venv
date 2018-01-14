@@ -41,6 +41,20 @@ ${KEYWORD}Usage${NOCOLOR}: ${PROGRAM}${0}${NOCOLOR} requirements_file ...
             ${KEYWORD}Default${NOCOLOR}=${PYTHON_VENV_PIP_VERBOSE}
 EOF`
 
+log_info()
+{
+    echo -e "${TEXT}${1}${NOCOLOR}"
+}
+
+log_success()
+{
+    echo -e "${SUCCESS}${1}${NOCOLOR}"
+}
+
+log_error()
+{
+    echo -e "${ERROR}${1}${NOCOLOR}"
+}
 
 ###############################################################################
 # Answer the name that will be used to store a given requirements file name
@@ -131,20 +145,17 @@ check_requirements_not_changed()
 {
     save_requirements "$@"
 
-    echo -e "${TEXT}Checking if python requirements was not changed${NOCOLOR}"
+    log_info "Checking if python requirements was not changed"
     local check_response="${PYTHON_REQUIREMENTS_MD5}.check"
 
     md5sum -c "$PYTHON_REQUIREMENTS_MD5" > "${check_response}" 2>&1
     local md5_result="$?"
-    local response_color="${ERROR}"
+    local response="$(cat ${check_response})"
+    rm "$check_response"
 
     [ "$md5_result" == "0" ] &&
-    {
-        response_color="${SUCCESS}"
-    }
-
-    echo -e "${response_color}$(cat ${check_response})${NOCOLOR}"
-    rm "$check_response"
+        log_success "$response" ||
+        log_error "$response"
 
     return $md5_result
 }
@@ -153,7 +164,7 @@ assert_python()
 {
     "$PYTHON_VENV_PROGRAM" -V > /dev/null 2>&1 ||
     {
-        echo -e "${ERROR}$PYTHON_VENV_PROGRAM is required${NOCOLOR}"
+        log_error "$PYTHON_VENV_PROGRAM is required"
         exit 1
     }
 }
@@ -162,7 +173,7 @@ assert_virtualenv()
 {
     virtualenv --version > /dev/null 2>&1 ||
     {
-        echo -e "${ERROR}virtualenv is required${NOCOLOR}"
+        log_error "virtualenv is required"
         exit 1
     }
 }
@@ -173,7 +184,7 @@ assert_files_exists()
     do
         [ ! -f "$file" ] &&
         {
-            echo -e "${ERROR}File ${file} not exists${NOCOLOR}"
+            log_error "File ${file} not exists"
             exit 1
         }
     done
@@ -208,7 +219,7 @@ build_python_venv()
 
     for requirements in "$@";
     do
-        echo -e "${TEXT}Installing ${requirements}${NOCOLOR}"
+        log_info "Installing ${requirements}"
         "$PYTHON_VENV_DIR/bin/pip" install ${pip_quiet} -r "$requirements"
     done
 
@@ -236,13 +247,13 @@ setup_python_venv()
 {
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
-        echo -e "${TEXT}Building python virtual enviroment.${NOCOLOR}"
+        log_info "Building python virtual enviroment."
         build_python_venv "$@"
     } ||
     {
         check_requirements_not_changed "$@" ||
         {
-            echo -e "${TEXT}Re-building python virtual. Enviroment requirements changed.${NOCOLOR}"
+            log_info "Re-building python virtual. Enviroment requirements changed."
             build_python_venv "$@"
         }
     }
@@ -265,4 +276,3 @@ main()
 }
 
 main "$@"
-
