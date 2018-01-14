@@ -2,13 +2,45 @@
 
 readonly PYTHON_VENV_PROGRAM_DEFAULT="python3.6"
 readonly PYTHON_VENV_DIR_DEFAULT=".virtualenv"
+readonly PYTHON_VENV_PIP_VERBOSE_DEFAULT="NO"
 
 PYTHON_VENV_PROGRAM="${PYTHON_VENV_PROGRAM:-"$PYTHON_VENV_PROGRAM_DEFAULT"}"
+PYTHON_VENV_PIP_VERBOSE="${PYTHON_VENV_PIP_VERBOSE:-"$PYTHON_VENV_PIP_VERBOSE_DEFAULT"}"
 PYTHON_VENV_DIR="${PYTHON_VENV_DIR:-"$PYTHON_VENV_DIR_DEFAULT"}"
 
-readonly PYTHON_REQUIREMENTS_DIR="$PYTHON_VENV_DIR"/".setup_python_venv/requirements"
-readonly PYTHON_REQUIREMENTS_MD5="$PYTHON_REQUIREMENTS_DIR"/"requirements.md5"
-readonly PYTHON_REQUIREMENTS_LIST="$PYTHON_REQUIREMENTS_DIR"/"requirements.lst"
+readonly PYTHON_REQUIREMENTS_DIR="$PYTHON_VENV_DIR/.setup_python_venv/requirements"
+readonly PYTHON_REQUIREMENTS_MD5="$PYTHON_REQUIREMENTS_DIR/requirements.md5"
+readonly PYTHON_REQUIREMENTS_LIST="$PYTHON_REQUIREMENTS_DIR/requirements.lst"
+
+readonly SUCCESS="\033[0;32m" #green
+readonly ERROR="\033[0;31m" #red
+readonly KEYWORD="\033[1;37m" #white
+readonly PROGRAM="\033[0;32m" #green
+readonly TEXT="\033[1;34m" #light blue
+readonly NOCOLOR="\033[0m"
+
+readonly USAGE=`cat << EOF
+
+${KEYWORD}Usage${NOCOLOR}: ${PROGRAM}${0}${NOCOLOR} requirements_file ...
+    ${TEXT}
+    At the first call the virtual environment will be build.
+    Subsequent calls will update the environment if needed.
+    The virtual environment will be created at ${PYTHON_VENV_DIR_DEFAULT} folder.
+    ${NOCOLOR}
+    ${KEYWORD}System environment variables:${NOCOLOR}
+        ${KEYWORD}PYTHON_VENV_DIR:${NOCOLOR}${TEXT}Set to define the directory
+            to build the virtual environment.${NOCOLOR}
+            ${KEYWORD}Default:${NOCOLOR}${PYTHON_VENV_DIR_DEFAULT}
+
+        ${KEYWORD}PYTHON_VENV_PROGRAM:${NOCOLOR}${TEXT}Set to define the python
+            program to use on build the virtual environment.${NOCOLOR}
+            ${KEYWORD}Default${NOCOLOR}=${PYTHON_VENV_PROGRAM_DEFAULT}
+
+        ${KEYWORD}PYTHON_VENV_PIP_VERBOSE:${NOCOLOR}${TEXT}Set "YES" to define the pip
+            in verbose mode or "NO" to no verbose.${NOCOLOR}
+            ${KEYWORD}Default${NOCOLOR}=${PYTHON_VENV_PIP_VERBOSE}
+EOF`
+
 
 ###############################################################################
 # Answer the name that will be used to store a given requirements file name
@@ -99,11 +131,21 @@ check_requirements_not_changed()
 {
     save_requirements "$@"
 
-    echo "Checking if python requirements was not changed"
+    echo -e "${TEXT}Checking if python requirements was not changed${NOCOLOR}"
+    local check_response="${PYTHON_REQUIREMENTS_MD5}.check"
 
-    md5sum -c "$PYTHON_REQUIREMENTS_MD5"
-    local md5_result=$?
-    echo " "
+    md5sum -c "$PYTHON_REQUIREMENTS_MD5" > "${check_response}" 2>&1
+    local md5_result="$?"
+    local response_color="${ERROR}"
+
+    [ "$md5_result" == "0" ] &&
+    {
+        response_color="${SUCCESS}"
+    }
+
+    echo -e "${response_color}$(cat ${check_response})${NOCOLOR}"
+    rm "$check_response"
+
     return $md5_result
 }
 
@@ -111,7 +153,7 @@ assert_python()
 {
     "$PYTHON_VENV_PROGRAM" -V > /dev/null 2>&1 ||
     {
-        echo "$PYTHON_VENV_PROGRAM is required"
+        echo -e "${ERROR}$PYTHON_VENV_PROGRAM is required${NOCOLOR}"
         exit 1
     }
 }
@@ -120,7 +162,7 @@ assert_virtualenv()
 {
     virtualenv --version > /dev/null 2>&1 ||
     {
-        echo "virtualenv is required"
+        echo -e "${ERROR}virtualenv is required${NOCOLOR}"
         exit 1
     }
 }
@@ -131,7 +173,7 @@ assert_files_exists()
     do
         [ ! -f "$file" ] &&
         {
-            echo "File ${file} not exists"
+            echo -e "${ERROR}File ${file} not exists${NOCOLOR}"
             exit 1
         }
     done
@@ -152,17 +194,23 @@ assert_files_exists()
 ###############################################################################
 build_python_venv()
 {
-    rm -rf "$PYTHON_VENV_DIR"
-
     assert_python
     assert_virtualenv
 
-    virtualenv -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR"
+    virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR"
     source "$PYTHON_VENV_DIR/bin/activate"
+
+    local pip_quiet="--quiet"
+
+    [ "${PYTHON_VENV_PIP_VERBOSE}" == "YES" ] &&
+    {
+        pip_quiet=""
+    }
 
     for requirements in "$@";
     do
-        pip install -r "$requirements"
+        echo -e "${TEXT}Installing ${requirements}${NOCOLOR}"
+        pip install ${pip_quiet} -r "$requirements"
     done
 
     save_requirements_md5 "$@"
@@ -189,13 +237,13 @@ setup_python_venv()
 {
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
-        echo "Building python virtual enviroment."
+        echo -e "${TEXT}Building python virtual enviroment.${NOCOLOR}"
         build_python_venv "$@"
     } ||
     {
         check_requirements_not_changed "$@" ||
         {
-            echo "Re-building python virtual. Enviroment requirements changed."
+            echo -e "${TEXT}Re-building python virtual. Enviroment requirements changed.${NOCOLOR}"
             build_python_venv "$@"
         }
     }
@@ -207,24 +255,13 @@ main()
 {
     [ "$#" -lt "1" ] &&
     {
-        echo "Usage: ${0} requirements_file ..."
-        echo ""
-        echo "    At the first call the virtual environment will be build."
-        echo "    Subsequent calls will update the environment if needed."
-        echo "    The virtual environment will be created at .virtualenv folder"
-        echo ""
-        echo "    System environment variables:"
-        echo "        PYTHON_VENV_DIR: Set to define the directory to build"
-        echo "        the virtual environment. default=${PYTHON_VENV_DIR_DEFAULT}"
-        echo ""
-        echo "        PYTHON_VENV_PROGRAM: Set to define the python program to use on build"
-        echo "        the virtual environment. default=${PYTHON_VENV_PROGRAM_DEFAULT}"
-
+        echo -e "$USAGE"
         exit 1
     } ||
     {
         assert_files_exists "$@"
         setup_python_venv "$@"
+        echo -e "${TEXT}Done${NOCOLOR}"
     }
 }
 
