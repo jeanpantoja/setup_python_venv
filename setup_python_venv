@@ -1,29 +1,46 @@
 #!/usr/bin/env bash
 
 PYTHON_VENV_VERSION=${PYTHON_VENV_VERSION:-"python3.6"}
-PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-."virtualenv"}
-PYTHON_REQUIREMENTS_MD5=$PYTHON_VENV_DIR/requirements.md5
-PYTHON_REQUIREMENTS_LIST=$PYTHON_VENV_DIR/requirements.lst
+PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-".virtualenv"}
+PYTHON_REQUIREMENTS_DIR=$PYTHON_VENV_DIR/".setup_python_venv/requirements"
+PYTHON_REQUIREMENTS_MD5=$PYTHON_REQUIREMENTS_DIR/"requirements.md5"
+PYTHON_REQUIREMENTS_LIST=$PYTHON_REQUIREMENTS_DIR/"requirements.lst"
 
-create_requirements_list()
+requirements_file_dest_name()
+{
+    local requirements_file=$1
+
+    local fullname="$(realpath $requirements_file)"
+    echo "${PYTHON_REQUIREMENTS_DIR}${fullname}"
+}
+
+save_requirements()
 {
     local requirements_list=$*
 
     echo $requirements_list > $PYTHON_REQUIREMENTS_LIST
+
+    for requirements in $requirements_list;
+    do
+        local name="$(requirements_file_dest_name $requirements)"
+        mkdir -p "$(dirname $name)"
+        cp $requirements $name
+    done
 }
 
 create_requirements_md5()
 {
+
     local requirements_list=$*
 
-    create_requirements_list $requirements_list
-    cp $requirements_list $PYTHON_VENV_DIR
+    save_requirements $requirements_list
 
     md5sum $PYTHON_REQUIREMENTS_LIST > $PYTHON_REQUIREMENTS_MD5
 
-    for f in $requirements_list;
+    for requirements in $requirements_list;
     do
-        md5sum $PYTHON_VENV_DIR/$(basename $f) >> $PYTHON_REQUIREMENTS_MD5
+        local name="$(requirements_file_dest_name $requirements)"
+        md5sum $name >> $PYTHON_REQUIREMENTS_MD5
     done
 }
 
@@ -31,13 +48,12 @@ check_requirements_md5()
 {
     local requirements_list=$*
 
-    create_requirements_list $requirements_list
-    cp $requirements_list $PYTHON_VENV_DIR
+    save_requirements $requirements_list
 
     echo "Checking python requirements"
 
     md5sum -c $PYTHON_REQUIREMENTS_MD5
-    md5_result=$?
+    local md5_result=$?
     echo " "
     return $md5_result
 }
@@ -79,6 +95,7 @@ build_python_venv()
     local requirements_list=$*
 
     rm -rf $PYTHON_VENV_DIR
+    mkdir -p $PYTHON_REQUIREMENTS_DIR
 
     assert_python
     assert_virtualenv
