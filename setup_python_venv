@@ -78,7 +78,7 @@ assert_virtualenv()
 
 assert_files_exists()
 {
-    files=$*
+    local files=$*
 
     for file in $files;
     do
