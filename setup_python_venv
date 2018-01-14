@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 
-PYTHON_VENV_VERSION=${PYTHON_VENV_VERSION:-"python3.6"}
-PYTHON_VENV_DIR=${PYTHON_VENV_DIR:-".virtualenv"}
-PYTHON_REQUIREMENTS_DIR=$PYTHON_VENV_DIR/".setup_python_venv/requirements"
-PYTHON_REQUIREMENTS_MD5=$PYTHON_REQUIREMENTS_DIR/"requirements.md5"
-PYTHON_REQUIREMENTS_LIST=$PYTHON_REQUIREMENTS_DIR/"requirements.lst"
+readonly PYTHON_VENV_PROGRAM_DEFAULT="python3.6"
+readonly PYTHON_VENV_DIR_DEFAULT=".virtualenv"
 
-requirements_file_dest_name()
+PYTHON_VENV_PROGRAM="${PYTHON_VENV_PROGRAM:-"$PYTHON_VENV_PROGRAM_DEFAULT"}"
+PYTHON_VENV_DIR="${PYTHON_VENV_DIR:-"$PYTHON_VENV_DIR_DEFAULT"}"
+
+readonly PYTHON_REQUIREMENTS_DIR="$PYTHON_VENV_DIR"/".setup_python_venv/requirements"
+readonly PYTHON_REQUIREMENTS_MD5="$PYTHON_REQUIREMENTS_DIR"/"requirements.md5"
+readonly PYTHON_REQUIREMENTS_LIST="$PYTHON_REQUIREMENTS_DIR"/"requirements.lst"
+
+###############################################################################
+# Answer the name that will be used to store a given requirements file name
+#
+# Globals:
+#   PYTHON_REQUIREMENTS_DIR
+#
+# Arguments:
+#   The origin file requirements name
+#
+# Returns:
+#   The destiny file requirements name
+###############################################################################
+requirements_file_name()
 {
     local requirements_file="$1"
 
@@ -14,19 +30,46 @@ requirements_file_dest_name()
     echo "${PYTHON_REQUIREMENTS_DIR}${fullname}"
 }
 
+###############################################################################
+# Save the requirements files and its names
+#
+# Globals:
+#   PYTHON_REQUIREMENTS_LIST
+#   PYTHON_REQUIREMENTS_DIR
+#
+# Arguments:
+#   The list of requirements files to save
+#
+# Returns:
+#   None
+###############################################################################
 save_requirements()
 {
+    mkdir -p "$PYTHON_REQUIREMENTS_DIR"
     realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST"
 
     for requirements in "$@";
     do
-        local name="$(requirements_file_dest_name $requirements)"
+        local name="$(requirements_file_name $requirements)"
         mkdir -p "$(dirname $name)"
         cp "$requirements" "$name"
     done
 }
 
-create_requirements_md5()
+###############################################################################
+# Save the requirements md5 to later check changes
+#
+# Globals:
+#   PYTHON_REQUIREMENTS_LIST
+#   PYTHON_REQUIREMENTS_MD5
+#
+# Arguments:
+#   The list of requirements files to save
+#
+# Returns:
+#   None
+###############################################################################
+save_requirements_md5()
 {
     save_requirements "$@"
 
@@ -34,16 +77,29 @@ create_requirements_md5()
 
     for requirements in "$@";
     do
-        local name="$(requirements_file_dest_name $requirements)"
+        local name="$(requirements_file_name $requirements)"
         md5sum "$name" >> "$PYTHON_REQUIREMENTS_MD5"
     done
 }
 
-check_requirements_md5()
+###############################################################################
+# Check if all requirements still are the same since the environment was
+# configured
+#
+# Globals:
+#   PYTHON_REQUIREMENTS_MD5
+#
+# Arguments:
+#   The list of requirements files
+#
+# Returns:
+#   exit status success if requirements files was not changed
+###############################################################################
+check_requirements_not_changed()
 {
     save_requirements "$@"
 
-    echo "Checking python requirements"
+    echo "Checking if python requirements was not changed"
 
     md5sum -c "$PYTHON_REQUIREMENTS_MD5"
     local md5_result=$?
@@ -53,9 +109,9 @@ check_requirements_md5()
 
 assert_python()
 {
-    "$PYTHON_VENV_VERSION" -V > /dev/null 2>&1 ||
+    "$PYTHON_VENV_PROGRAM" -V > /dev/null 2>&1 ||
     {
-        echo "$PYTHON_VENV_VERSION is required"
+        echo "$PYTHON_VENV_PROGRAM is required"
         exit 1
     }
 }
@@ -80,16 +136,28 @@ assert_files_exists()
         }
     done
 }
-
+###############################################################################
+# Build the python virtual environment and install the dependencies using the
+# given requirements files list.
+#
+# Globals:
+#   PYTHON_VENV_DIR
+#   PYTHON_VENV_PROGRAM
+#
+# Arguments:
+#   The list of requirements files
+#
+# Returns:
+#   None
+###############################################################################
 build_python_venv()
 {
     rm -rf "$PYTHON_VENV_DIR"
-    mkdir -p "$PYTHON_REQUIREMENTS_DIR"
 
     assert_python
     assert_virtualenv
 
-    virtualenv -p python3.6 "$PYTHON_VENV_DIR"
+    virtualenv -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR"
     source "$PYTHON_VENV_DIR/bin/activate"
 
     for requirements in "$@";
@@ -97,9 +165,26 @@ build_python_venv()
         pip install -r "$requirements"
     done
 
-    create_requirements_md5 "$@"
+    save_requirements_md5 "$@"
 }
 
+###############################################################################
+# Setup the python virtual environment with the given requirements files list.
+# If the virtual environment already was setup then it will be update in case
+# that the requirements files changed in other case if the requirements files
+# was not modified then nothing will be done
+#
+# configured
+#
+# Globals:
+#   PYTHON_VENV_DIR
+#
+# Arguments:
+#   The list of requirements files
+#
+# Returns:
+#   exit status success if environment was setup
+###############################################################################
 setup_python_venv()
 {
     [  ! -d $PYTHON_VENV_DIR ] &&
@@ -108,7 +193,7 @@ setup_python_venv()
         build_python_venv "$@"
     } ||
     {
-        check_requirements_md5 "$@" ||
+        check_requirements_not_changed "$@" ||
         {
             echo "Re-building python virtual. Enviroment requirements changed."
             build_python_venv "$@"
@@ -118,27 +203,29 @@ setup_python_venv()
     return "0"
 }
 
-# Main script
-
-[ "$#" -lt "1" ] &&
-{
-    echo "Usage: ${0} requirement_file ..."
-    echo ""
-    echo "    At the first call the virtual environment will be build."
-    echo "    Subsequent calls will update the environment if needed."
-    echo "    The virtual environment will be created at .virtualenv folder"
-    echo ""
-    echo "    System variables:"
-    echo "        PYTHON_VENV_DIR: Set to define the directory to build"
-    echo "        the virtual environment. default=.virtualenv"
-
-    exit 1
-}
-
 main()
 {
-    assert_files_exists "$@"
-    setup_python_venv "$@"
+    [ "$#" -lt "1" ] &&
+    {
+        echo "Usage: ${0} requirements_file ..."
+        echo ""
+        echo "    At the first call the virtual environment will be build."
+        echo "    Subsequent calls will update the environment if needed."
+        echo "    The virtual environment will be created at .virtualenv folder"
+        echo ""
+        echo "    System environment variables:"
+        echo "        PYTHON_VENV_DIR: Set to define the directory to build"
+        echo "        the virtual environment. default=${PYTHON_VENV_DIR_DEFAULT}"
+        echo ""
+        echo "        PYTHON_VENV_PROGRAM: Set to define the python program to use on build"
+        echo "        the virtual environment. default=${PYTHON_VENV_PROGRAM_DEFAULT}"
+
+        exit 1
+    } ||
+    {
+        assert_files_exists "$@"
+        setup_python_venv "$@"
+    }
 }
 
 main "$@"
