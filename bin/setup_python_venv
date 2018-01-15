@@ -162,22 +162,31 @@ check_requirements_not_changed()
     return $md5_result
 }
 
-assert_python()
+assert_program()
 {
-    "$PYTHON_VENV_PROGRAM" -V > /dev/null 2>&1 ||
+    local program=$1
+    local args=$2
+
+    "$program" "$args" > /dev/null 2>&1 ||
     {
-        log_error "The program[$PYTHON_VENV_PROGRAM] is required"
+        log_error "The program[$program] is required"
         exit 1
     }
 }
 
+assert_python()
+{
+    assert_program "$PYTHON_VENV_PROGRAM" "-V"
+}
+
 assert_virtualenv()
 {
-    virtualenv --version > /dev/null 2>&1 ||
-    {
-        log_error "The program [virtualenv] is required"
-        exit 1
-    }
+    assert_program "virtualenv" "--version"
+}
+
+assert_md5sum()
+{
+    assert_program "md5sum" "--version"
 }
 
 assert_files_exists()
@@ -255,6 +264,7 @@ setup_python_venv()
 {
     assert_python
     assert_virtualenv
+    assert_md5sum
     assert_files_exists "$@"
 
     [  ! -d $PYTHON_VENV_DIR ] &&
