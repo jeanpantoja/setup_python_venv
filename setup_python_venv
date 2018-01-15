@@ -216,11 +216,7 @@ assert_files_exists()
 ###############################################################################
 build_python_venv()
 {
-    assert_python
-    assert_virtualenv
-    assert_files_exists "$@"
     cleanup
-
     save_requirements_md5 "$@"
 
     virtualenv -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR" > "/dev/null" 2>&1 ||
@@ -265,6 +261,10 @@ build_python_venv()
 ###############################################################################
 setup_python_venv()
 {
+    assert_python
+    assert_virtualenv
+    assert_files_exists "$@"
+
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
         log_info "Building python virtual enviroment."
