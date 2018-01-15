@@ -13,6 +13,8 @@ readonly PYTHON_REQUIREMENTS_MD5="$PYTHON_REQUIREMENTS_DIR/requirements.md5"
 readonly PYTHON_REQUIREMENTS_LIST="$PYTHON_REQUIREMENTS_DIR/requirements.lst"
 
 readonly SUCCESS="\033[0;32m" #green
+readonly WARNING="\033[0;33m" #yellow
+readonly INFO="\033[1;34m" #light blue
 readonly ERROR="\033[0;31m" #red
 readonly KEYWORD="\033[1;37m" #white
 readonly PROGRAM="\033[0;32m" #green
@@ -29,19 +31,24 @@ keyword()
     echo "${KEYWORD}${1}${NOCOLOR}"
 }
 
+log_warning()
+{
+    echo -e "$(text "WARNING:") ${WARNING}${1}${NOCOLOR}"
+}
+
 log_info()
 {
-    echo -e "${TEXT}${1}${NOCOLOR}"
+    echo -e "$(text "INFO:") ${INFO}${1}${NOCOLOR}"
 }
 
 log_success()
 {
-    echo -e "${SUCCESS}${1}${NOCOLOR}"
+    echo -e "$(text "SUCCESS:")${SUCCESS}${1}${NOCOLOR}"
 }
 
 log_error()
 {
-    echo -e "${ERROR}${1}${NOCOLOR}"
+    echo -e "$(text "ERROR:") ${ERROR}${1}${NOCOLOR}"
 }
 
 ###############################################################################
@@ -79,14 +86,22 @@ requirements_file_name()
 ###############################################################################
 save_requirements()
 {
-    mkdir -p "$PYTHON_REQUIREMENTS_DIR"
-    realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST"
+    (mkdir -p "$PYTHON_REQUIREMENTS_DIR" &&
+        realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST") ||
+    {
+        log_error "Fail at save $PYTHON_REQUIREMENTS_LIST"
+        exit 1
+    }
 
     for requirements in "$@";
     do
         local name="$(requirements_file_name $requirements)"
-        mkdir -p "$(dirname $name)"
-        cp "$requirements" "$name"
+        (mkdir -p "$(dirname $name)" &&
+            cp "$requirements" "$name" ) ||
+        {
+            log_error "Fail at save ${name}"
+            exit 1
+        }
     done
 }
 
@@ -196,7 +211,13 @@ build_python_venv()
     assert_python
     assert_virtualenv
 
-    virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR"
+    assert_files_exists "$@"
+    virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR" > "/dev/null" 2>&1 ||
+    {
+        log_error "Fail at call virtualenv to create virtual environment
+        at directory[${PYTHON_VENV_DIR}] to python program[${PYTHON_VENV_PROGRAM}]."
+        exit 1
+    }
 
     local pip_quiet="--quiet"
 
@@ -252,11 +273,13 @@ setup_python_venv()
 usage()
 {
     readonly usage_content=`cat << EOF
-$(keyword "Usage:") $(keyword "${0}") $(text "requirements_file ...")
+$(keyword "Usage:") $(keyword "${0}") $(text "[requirements_file] ...")
     $(text "
     At the first call the virtual environment will be build. Subsequent calls will
     update the environment if needed. The virtual environment will be created at
-    directory defined in") $(keyword "PYTHON_VENV_DIR") $(text "system environment variable.")
+    directory defined in") $(keyword "PYTHON_VENV_DIR") $(text "system environment variable.
+    If requirements file is omitted the program will find for requirements.txt file in the
+    current directory.")
 
     $(keyword "System environment variables:")
 
@@ -273,20 +296,49 @@ $(keyword "Usage:") $(keyword "${0}") $(text "requirements_file ...")
             $(keyword "Default:") $(text "'${PYTHON_VENV_PIP_VERBOSE}'")
 EOF`
     echo -e "$usage_content"
+    exit 0
 }
 
 main()
 {
-    [ "$#" -lt "1" ] &&
+    while getopts ":p:d:vh" opt;
+    do
+        case "$opt" in
+            "p")
+                PYTHON_VENV_PROGRAM="${OPTARG}"
+                ;;
+            "d")
+                PYTHON_VENV_DIR="${OPTARG}"
+                ;;
+            "v")
+                PYTHON_VENV_PIP_VERBOSE="YES"
+                ;;
+            "h")
+                usage
+                ;;
+            "?")
+                log_warning "Invalid option: -${OPTARG}."
+                ;;
+            ":")
+                log_error "An argument to option[-${OPTARG}] is required. Aborting execution."
+                exit 1
+                ;;
+        esac
+    done
+
+    local args=("$@")
+    local first_positional_arg=$(( ${OPTIND} - 1))
+    local positional_args=("${args[@]:$first_positional_arg}")
+
+    local number_of_positional_args="${#positional_args[@]}"
+
+    [ "$number_of_positional_args" -eq "0" ] &&
     {
-        usage
-        exit 1
-    } ||
-    {
-        assert_files_exists "$@"
-        setup_python_venv "$@"
-        echo -e "${TEXT}Done${NOCOLOR}"
+        positional_args=("requirements.txt")
     }
+
+    setup_python_venv "${positional_args[@]}"
+    log_info "Done"
 }
 
 main "$@"
