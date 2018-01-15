@@ -54,7 +54,7 @@ log_error()
 
 cleanup()
 {
-    rm -rf $SETUP_PYTHON_ENV_DIR
+    rm -rf "$PYTHON_VENV_DIR"
 }
 
 ###############################################################################
@@ -83,6 +83,7 @@ requirements_file_name()
 # Globals:
 #   PYTHON_REQUIREMENTS_LIST
 #   PYTHON_REQUIREMENTS_DIR
+#   PYTHON_VENV_PROGRAM
 #
 # Arguments:
 #   The list of requirements files to save
@@ -93,7 +94,8 @@ requirements_file_name()
 save_requirements()
 {
     (mkdir -p "$PYTHON_REQUIREMENTS_DIR" &&
-        realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST") ||
+        realpath "$@" | sort > "$PYTHON_REQUIREMENTS_LIST" &&
+        echo "$PYTHON_VENV_PROGRAM" >> "$PYTHON_REQUIREMENTS_LIST") ||
     {
         log_error "Fail at save $PYTHON_REQUIREMENTS_LIST"
         exit 1
@@ -173,7 +175,7 @@ assert_python()
 {
     "$PYTHON_VENV_PROGRAM" -V > /dev/null 2>&1 ||
     {
-        log_error "$PYTHON_VENV_PROGRAM is required"
+        log_error "The program[$PYTHON_VENV_PROGRAM] is required"
         exit 1
     }
 }
@@ -182,7 +184,7 @@ assert_virtualenv()
 {
     virtualenv --version > /dev/null 2>&1 ||
     {
-        log_error "virtualenv is required"
+        log_error "The program [virtualenv] is required"
         exit 1
     }
 }
@@ -219,14 +221,15 @@ build_python_venv()
     assert_files_exists "$@"
     cleanup
 
-    virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR" > "/dev/null" 2>&1 ||
+    save_requirements_md5 "$@"
+
+    virtualenv -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR" > "/dev/null" 2>&1 ||
     {
         log_error "Fail at call virtualenv to create virtual environment
         at directory[${PYTHON_VENV_DIR}] to python program[${PYTHON_VENV_PROGRAM}]."
         exit 1
     }
 
-    save_requirements_md5 "$@"
 
     local pip_quiet="--quiet"
 
@@ -265,7 +268,7 @@ setup_python_venv()
     [  ! -d $PYTHON_VENV_DIR ] &&
     {
         log_info "Building python virtual enviroment."
-        build_python_venv || exit 1
+        build_python_venv "$@" || exit 1
     } ||
     {
         check_requirements_not_changed "$@" ||
