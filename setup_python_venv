@@ -226,6 +226,7 @@ build_python_venv()
         exit 1
     }
 
+    log_info "Creating virtual environment for python program[${PYTHON_VENV_PROGRAM}] at folder[${PYTHON_VENV_DIR}]."
 
     local pip_quiet="--quiet"
 
@@ -271,7 +272,7 @@ setup_python_venv()
         build_python_venv "$@" || exit 1
     } ||
     {
-        check_requirements_not_changed "$@" ||
+        check_requirements_not_changed "$@" && log_info "No updates to be executed" ||
         {
             log_info "Re-building python virtual. Enviroment requirements changed."
             build_python_venv "$@" || exit 1
