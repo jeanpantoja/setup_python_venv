@@ -1,17 +1,17 @@
 # Setup python virtual environment
 
-    This script was done to help setup the python virtual environment during
+This script was done to help setup the python virtual environment during
 the dev stage. During the initial stage of development the requiriments
 change a lot until find the heart library.
 
-    Once upon we pass this stage, eventually the requirements will
+Once upon we pass this stage, eventually the requirements will
 change and the pip will not clean the old requirements for you, pip is
 your friend not your mommy. This program will help to keep the house
 clean. Enjoy yourself :P
 
-## Installation:
-### Linux
-    Just copy this shit to your /usr/local/bin or other folder that is
+# Installation:
+## Linux
+Just copy this shit to your /usr/local/bin or other folder that is
 in your system path. You can just use this direct calling too like
 ./setup_python_venv -h if it is in your current directory. This is
 only a simple bash script.
@@ -21,7 +21,7 @@ I dont know and i dont care. Problably it will not work. If a day
 someone clone this and use on windows and it work please, share
 what is needed to use in windows.
 
-## Usage:
+# Usage:
 
 $ setup_python_venv -h
 
