@@ -24,12 +24,12 @@ readonly NOCOLOR="\033[0m"
 
 text()
 {
-    echo "${TEXT}${1}${NOCOLOR}"
+    echo -e "${TEXT}${1}${NOCOLOR}"
 }
 
 keyword()
 {
-    echo "${KEYWORD}${1}${NOCOLOR}"
+    echo -e "${KEYWORD}${1}${NOCOLOR}"
 }
 
 log_warning()
@@ -73,7 +73,7 @@ requirements_file_name()
 {
     local requirements_file="$1"
 
-    local fullname="$(realpath $requirements_file)"
+    local fullname="$(realpath "$requirements_file")"
     echo "${PYTHON_REQUIREMENTS_DIR}${fullname}"
 }
 
@@ -101,8 +101,8 @@ save_requirements()
 
     for requirements in "$@";
     do
-        local name="$(requirements_file_name $requirements)"
-        (mkdir -p "$(dirname $name)" &&
+        local name="$(requirements_file_name "$requirements")"
+        (mkdir -p "$(dirname "$name")" &&
             cp "$requirements" "$name" ) ||
         {
             log_error "Fail at save ${name}"
@@ -132,7 +132,7 @@ save_requirements_md5()
 
     for requirements in "$@";
     do
-        local name="$(requirements_file_name $requirements)"
+        local name="$(requirements_file_name "$requirements")"
         md5sum "$name" >> "$PYTHON_REQUIREMENTS_MD5"
     done
 }
@@ -226,6 +226,8 @@ build_python_venv()
         exit 1
     }
 
+    save_requirements_md5 "$@"
+
     local pip_quiet="--quiet"
 
     [ "${PYTHON_VENV_PIP_VERBOSE}" == "YES" ] &&
@@ -239,7 +241,6 @@ build_python_venv()
         "$PYTHON_VENV_DIR/bin/pip" install ${pip_quiet} -r "$requirements"
     done
 
-    save_requirements_md5 "$@"
 }
 
 ###############################################################################
