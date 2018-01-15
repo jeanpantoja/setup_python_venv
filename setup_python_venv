@@ -19,27 +19,15 @@ readonly PROGRAM="\033[0;32m" #green
 readonly TEXT="\033[1;34m" #light blue
 readonly NOCOLOR="\033[0m"
 
-readonly USAGE=`cat << EOF
+text()
+{
+    echo "${TEXT}${1}${NOCOLOR}"
+}
 
-${KEYWORD}Usage${NOCOLOR}: ${PROGRAM}${0}${NOCOLOR} requirements_file ...
-    ${TEXT}
-    At the first call the virtual environment will be build.
-    Subsequent calls will update the environment if needed.
-    The virtual environment will be created at ${PYTHON_VENV_DIR_DEFAULT} folder.
-    ${NOCOLOR}
-    ${KEYWORD}System environment variables:${NOCOLOR}
-        ${KEYWORD}PYTHON_VENV_DIR:${NOCOLOR}${TEXT}Set to define the directory
-            to build the virtual environment.${NOCOLOR}
-            ${KEYWORD}Default:${NOCOLOR}${PYTHON_VENV_DIR_DEFAULT}
-
-        ${KEYWORD}PYTHON_VENV_PROGRAM:${NOCOLOR}${TEXT}Set to define the python
-            program to use on build the virtual environment.${NOCOLOR}
-            ${KEYWORD}Default${NOCOLOR}=${PYTHON_VENV_PROGRAM_DEFAULT}
-
-        ${KEYWORD}PYTHON_VENV_PIP_VERBOSE:${NOCOLOR}${TEXT}Set "YES" to define the pip
-            in verbose mode or "NO" to no verbose.${NOCOLOR}
-            ${KEYWORD}Default${NOCOLOR}=${PYTHON_VENV_PIP_VERBOSE}
-EOF`
+keyword()
+{
+    echo "${KEYWORD}${1}${NOCOLOR}"
+}
 
 log_info()
 {
@@ -261,11 +249,37 @@ setup_python_venv()
     return "0"
 }
 
+usage()
+{
+    readonly usage_content=`cat << EOF
+$(keyword "Usage:") $(keyword "${0}") $(text "requirements_file ...")
+    $(text "
+    At the first call the virtual environment will be build. Subsequent calls will
+    update the environment if needed. The virtual environment will be created at
+    directory defined in") $(keyword "PYTHON_VENV_DIR") $(text "system environment variable.")
+
+    $(keyword "System environment variables:")
+
+        $(keyword "PYTHON_VENV_DIR:")
+            $(text "Define the directory to build the virtual environment.")
+            $(keyword "Default:") $(text "${PYTHON_VENV_DIR_DEFAULT}")
+
+        $(keyword "PYTHON_VENV_PROGRAM:")
+            $(text "Define the python program to use on build the virtual environment.")
+            $(keyword "Default:") $(text "${PYTHON_VENV_PROGRAM_DEFAULT}")
+
+        $(keyword "PYTHON_VENV_PIP_VERBOSE:")
+            $(text "Define the pip verbose mode set ['YES' | 'NO'].")
+            $(keyword "Default:") $(text "'${PYTHON_VENV_PIP_VERBOSE}'")
+EOF`
+    echo -e "$usage_content"
+}
+
 main()
 {
     [ "$#" -lt "1" ] &&
     {
-        echo -e "$USAGE"
+        usage
         exit 1
     } ||
     {
