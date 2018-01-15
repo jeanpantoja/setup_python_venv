@@ -10,7 +10,7 @@ readonly INFO="\033[1;34m" #light blue
 readonly ERROR="\033[0;31m" #red
 readonly KEYWORD="\033[1;37m" #white
 readonly PROGRAM="\033[0;32m" #green
-readonly TEXT="\033[1;34m" #light blue
+readonly TEXT="\033[0;33m" #light blue
 readonly NOCOLOR="\033[0m"
 
 text()
@@ -276,55 +276,60 @@ setup_python_venv()
 usage()
 {
     readonly usage_content=`cat << EOF
-$(keyword "Usage:") $(keyword $(basename "${0}")) $(text "[option] ... [requirements_file] ...")
-    $(text "
-        At the first call the virtual environment will be build. At subsequent calls to this program after
-    the environment build, if the requirements was not changed then not will be done but if changed so the
-    program will execute an update at the virtual environment.
+$(text "
+Setup Python Virtual Environment(1)                                      setup_python_venv                                     Setup Python Virtual Environment(1)
 
-        The virtual environment will be created at directory defined in") $(keyword "PYTHON_VENV_DIR") $(text "system
-    environment variable that also can be defined using the") $(keyword "-d") $(text "option. If requirements files
-    are omitted the program will find for requirements.txt file in the current directory.")
+NAME
+       setup_python_venv- Setup Python Virtual Environment
 
-    $(keyword "Options and arguments( and correspondig environment variable ):")
+SYNOPSIS
+       setup_python_venv [options] ...  [requirements_file] ...
 
-        $(keyword "-d:") $(text "The directory to build the virtual environment;")
-            $(text "also") $(keyword "PYTHON_VENV_DIR")
-            $(keyword "Default:") $(text "${PYTHON_VENV_DIR_DEFAULT}")
+DESCRIPTION
+           At the first call the virtual environment will be build. At subsequent calls to this program after
+           the environment build, if the requirements was not changed then not will be done but if changed so the
+           program will execute an update at the virtual environment.
 
-        $(keyword "-p:") $(text "The python program to use on build the virtual environment;")
-            $(text "also") $(keyword "PYTHON_VENV_PROGRAM")
-            $(keyword "Default:") $(text "${PYTHON_VENV_PROGRAM_DEFAULT}")
+           The virtual environment will be created at directory defined in PYTHON_VENV_DIR system environment variable
+           that also can be defined using the -d option. If requirements files are omitted the program will find for
+           requirements.txt file in the current directory.
 
-        $(keyword "-v:") $(text "Enable verbose mode. No argument is required.")
-            $(keyword "Default:") $(text "Disabled")
+OPTIONS
+       -d     The directory to build the virtual environment; also PYTHON_VENV_DIR. Default = .virtualenv
 
-    $(keyword "Examples:")
-        $(text "
-            Create a python virtual environment at folder pyenv in the current directory.
-        The python used at this environment will be python3 and the dependencies will be
-        read from requirements.txt file:")
+       -p     The python program to use on build the virtual environment; also PYTHON_VENV_PROGRAM. Default = .python3.6
 
-            $(keyword "setup_python_venv") $(keyword "-d") pyenv $(keyword "-p") python3 requirements.txt
+       -v     Enable verbose mode. No argument is required. Default = Disabled
 
-        $(text "
-            Create a python virtual environment at folder ${PYTHON_VENV_DIR_DEFAULT} in the current directory.
-        The python used at this environment will be ${PYTHON_VENV_PROGRAM_DEFAULT} and the dependencies will be
-        read from requirements.txt and dev_requirements files:")
+       -h     Prints the usage help
 
-            $(keyword "setup_python_venv") requirements.txt dev_requirements.txt
+EXAMPLES
+           Create a python virtual environment at folder pyenv in the current directory.  The python used at this environment will be python3 and the dependencies
+       will be read from requirements.txt file:
 
-        $(text "
-            Create a python virtual environment at folder ${PYTHON_VENV_DIR_DEFAULT} in the current directory.
-        The python used at this environment will be ${PYTHON_VENV_PROGRAM_DEFAULT} and the program will check
-        for a requirements.txt file at current directory:")
+           setup_python_venv -d pyenv -p python3 requirements.txt
 
-            $(keyword "setup_python_venv")
+           Create a python virtual environment at folder .virtualenv in the current directory.  The python used at this environment  will  be  python3.6  and  the
+       dependencies will be read from requirements.txt and dev_requirements files:
 
-    $(keyword "AUTHOR:")
-        $(text "Jean Carlos Sales Pantoja; je.cspantoja@gmail.com; Florianópolis, Santa Catarina, Brasil")
+           setup_python_venv requirements.txt dev_requirements.txt
 
-    ")
+           Create a python virtual environment at folder .virtualenv in the current directory.  The python used at this environment will be python3.6 and the pro‐
+       gram will check for a requirements.txt file at current directory:
+
+           setup_python_venv
+
+BUGS
+       Bugs are tracked in GitHub Issues: https://github.com/jeanpantoja/setup_python_venv/issues
+
+RESOURCES AND DOCUMENTATION
+       GitHub repository & Issue Tracker: https://github.com/jeanpantoja/setup_python_venv
+
+AUTHORS
+       Jean Carlos Sales Pantoja - je.cs@pantoja@gmail.com
+
+setup_python_venv                                                              2017                                            Setup Python Virtual Environment(1)
+")
 EOF`
     echo -e "$usage_content"
     exit 0

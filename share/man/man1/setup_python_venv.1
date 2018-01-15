@@ -1,0 +1,103 @@
+.TH "Setup Python Virtual Environment" 1 2017 setup_python_venv setup_python_venv
+
+.\" This is a man page comment.
+
+.\" Man page syntax (actually roff syntax) is somewhat obscure, but the
+.\" important part is is that .<letter> specifies <letter>'s syntax for that
+.\" line, and \f<letter> specifies it for the characters that follow.
+
+.\" .B   Bold line
+.\" .I   Italic line (Rendered as underlined text in terminals)
+.\" .BI  Alternating bold/italics without spaces between arguments.
+.\"      Use `\ ` to include an "unpaddable" (literal) space in the output.
+.\" .RI  Alternating roman/italic
+
+.\" See http://liw.fi/manpages/ for an overview, or http://www.troff.org/54.pdf
+.\" for detailed language reference.
+
+.\" Macro to display an underlined URL in bold
+.de ur
+.nr CF \\n(.f
+.ft 4
+\\$1
+.ft \\n(CF
+..
+
+
+.SH NAME
+
+setup_python_venv\- Setup Python Virtual Environment
+
+.SH SYNOPSIS
+
+.B setup_python_venv
+.RI [ options ]
+.I ...
+.RI [ requirements_file ]
+.I ...
+.br
+
+.SH DESCRIPTION
+    At the first call the virtual environment will be build. At subsequent calls to this program after
+    the environment build, if the requirements was not changed then not will be done but if changed so the
+    program will execute an update at the virtual environment.
+
+    The virtual environment will be created at directory defined in
+.BR PYTHON_VENV_DIR " system environment variable "
+    that also can be defined using the
+.BR -d " option. If requirements files are omitted the program will find for"
+    requirements.txt file in the current directory.
+
+.SH OPTIONS
+
+.TP
+.B \-d
+The directory to build the virtual environment; also
+.BR PYTHON_VENV_DIR ". Default = .virtualenv"
+
+.TP
+.B \-p
+The python program to use on build the virtual environment; also
+.BR PYTHON_VENV_PROGRAM ". Default = .python3.6"
+
+.TP
+.B \-v
+Enable verbose mode. No argument is required. Default = Disabled
+
+.TP
+.B \-h
+Prints the usage help
+
+.SH EXAMPLES
+    Create a python virtual environment at folder pyenv in the current directory.
+The python used at this environment will be python3 and the dependencies will be
+read from requirements.txt file:
+
+    setup_python_venv -d pyenv -p python3 requirements.txt
+
+    Create a python virtual environment at folder .virtualenv in the current directory.
+The python used at this environment will be python3.6 and the dependencies will be
+read from requirements.txt and dev_requirements files:
+
+    setup_python_venv requirements.txt dev_requirements.txt
+
+
+    Create a python virtual environment at folder .virtualenv in the current directory.
+The python used at this environment will be python3.6 and the program will check
+for a requirements.txt file at current directory:
+
+    setup_python_venv
+
+
+
+.SH BUGS
+Bugs are tracked in GitHub Issues:
+.ur https://github.com/jeanpantoja/setup_python_venv/issues
+
+.SH RESOURCES AND DOCUMENTATION
+
+GitHub repository & Issue Tracker:
+.ur https://github.com/jeanpantoja/setup_python_venv
+
+.SH AUTHORS
+Jean Carlos Sales Pantoja - je.cs@pantoja@gmail.com
