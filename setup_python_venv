@@ -8,7 +8,8 @@ PYTHON_VENV_PROGRAM="${PYTHON_VENV_PROGRAM:-"$PYTHON_VENV_PROGRAM_DEFAULT"}"
 PYTHON_VENV_PIP_VERBOSE="${PYTHON_VENV_PIP_VERBOSE:-"$PYTHON_VENV_PIP_VERBOSE_DEFAULT"}"
 PYTHON_VENV_DIR="${PYTHON_VENV_DIR:-"$PYTHON_VENV_DIR_DEFAULT"}"
 
-readonly PYTHON_REQUIREMENTS_DIR="$PYTHON_VENV_DIR/.setup_python_venv/requirements"
+readonly SETUP_PYTHON_ENV_DIR="$PYTHON_VENV_DIR/.setup_python_venv"
+readonly PYTHON_REQUIREMENTS_DIR="$SETUP_PYTHON_ENV_DIR/requirements"
 readonly PYTHON_REQUIREMENTS_MD5="$PYTHON_REQUIREMENTS_DIR/requirements.md5"
 readonly PYTHON_REQUIREMENTS_LIST="$PYTHON_REQUIREMENTS_DIR/requirements.lst"
 
@@ -49,6 +50,11 @@ log_success()
 log_error()
 {
     echo -e "$(text "ERROR:") ${ERROR}${1}${NOCOLOR}"
+}
+
+cleanup()
+{
+    rm -rf $SETUP_PYTHON_ENV_DIR
 }
 
 ###############################################################################
@@ -210,8 +216,9 @@ build_python_venv()
 {
     assert_python
     assert_virtualenv
-
     assert_files_exists "$@"
+    cleanup
+
     virtualenv --clear -p "$PYTHON_VENV_PROGRAM" "$PYTHON_VENV_DIR" > "/dev/null" 2>&1 ||
     {
         log_error "Fail at call virtualenv to create virtual environment
