@@ -277,6 +277,7 @@ usage()
 {
     readonly usage_content=`cat << EOF
 $(text "
+
 Setup Python Virtual Environment(1)                                      setup_python_venv                                     Setup Python Virtual Environment(1)
 
 NAME
@@ -319,6 +320,9 @@ EXAMPLES
 
            setup_python_venv
 
+LICENSE
+       https://github.com/jeanpantoja/setup_python_venv/blob/master/LICENSE
+
 BUGS
        Bugs are tracked in GitHub Issues: https://github.com/jeanpantoja/setup_python_venv/issues
 
@@ -328,7 +332,8 @@ RESOURCES AND DOCUMENTATION
 AUTHORS
        Jean Carlos Sales Pantoja - je.cs@pantoja@gmail.com
 
-setup_python_venv                                                              2017                                            Setup Python Virtual Environment(1)
+setup_python_venv                                                              2018                                            Setup Python Virtual Environment(1)
+
 ")
 EOF`
     echo -e "$usage_content"
