@@ -11,7 +11,7 @@ clean. Enjoy yourself :P
 
 # Installation:
 ## Linux
-sudo ./install.sh
+sudo make install
 
 ## Windows
 I dont know and i dont care. Problably it will not work. If a day
