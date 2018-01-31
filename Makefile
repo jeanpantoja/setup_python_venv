@@ -1,8 +1,14 @@
 INSTALL_PREFIX="/usr/local"
+BUILD_PREFIX="build"
 
+build:
+	mkdir -p "$(BUILD_PREFIX)$(INSTALL_PREFIX)"
+	cp -rfv bin share "$(BUILD_PREFIX)$(INSTALL_PREFIX)"
+
+clean:
+	rm -rfv $(BUILD_PREFIX)
 install:
-	cp -rfv bin share $(INSTALL_PREFIX)
+	cd $(BUILD_PREFIX) && cp -rfv * /
 
 uninstall:
-	rm -f $(shell find  bin/ -type f -printf "$(INSTALL_PREFIX)/%p\n")
-	rm -f $(shell find  share/ -type f -printf "$(INSTALL_PREFIX)/%p\n")
+	rm -fv $(shell find $(BUILD_PREFIX) -type f -printf "/%P\n")
