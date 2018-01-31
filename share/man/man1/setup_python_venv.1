@@ -53,7 +53,7 @@ setup_python_venv \- Setup Python Virtual Environment
 .TP
 .B \-d
 The directory to build the virtual environment; also
-.BR PYTHON_VENV_DIR ". Default = .virtualenv"
+.BR PYTHON_VENV_DIR ". Default = .pyvenv"
 
 .TP
 .B \-p
@@ -75,14 +75,14 @@ read from requirements.txt file:
 
     setup_python_venv -d pyenv -p python3 requirements.txt
 
-    Create a python virtual environment at folder .virtualenv in the current directory.
+    Create a python virtual environment at folder .pyvenv in the current directory.
 The python used at this environment will be python3.6 and the dependencies will be
 read from requirements.txt and dev_requirements files:
 
     setup_python_venv requirements.txt dev_requirements.txt
 
 
-    Create a python virtual environment at folder .virtualenv in the current directory.
+    Create a python virtual environment at folder .pyvenv in the current directory.
 The python used at this environment will be python3.6 and the program will check
 for a requirements.txt file at current directory:
 

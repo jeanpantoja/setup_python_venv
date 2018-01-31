@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 readonly PYTHON_VENV_PROGRAM_DEFAULT="python3.6"
-readonly PYTHON_VENV_DIR_DEFAULT=".virtualenv"
+readonly PYTHON_VENV_DIR_DEFAULT=".pyvenv"
 readonly PYTHON_VENV_PIP_VERBOSE_DEFAULT="NO"
 
 readonly SUCCESS="\033[0;32m" #green
@@ -281,7 +281,7 @@ $(text "
 Setup Python Virtual Environment(1)                                      setup_python_venv                                     Setup Python Virtual Environment(1)
 
 NAME
-       setup_python_venv- Setup Python Virtual Environment
+       setup_python_venv - Setup Python Virtual Environment
 
 SYNOPSIS
        setup_python_venv [options] ...  [requirements_file] ...
@@ -296,7 +296,7 @@ DESCRIPTION
            requirements.txt file in the current directory.
 
 OPTIONS
-       -d     The directory to build the virtual environment; also PYTHON_VENV_DIR. Default = .virtualenv
+       -d     The directory to build the virtual environment; also PYTHON_VENV_DIR. Default = .pyvenv
 
        -p     The python program to use on build the virtual environment; also PYTHON_VENV_PROGRAM. Default = .python3.6
 
@@ -310,13 +310,13 @@ EXAMPLES
 
            setup_python_venv -d pyenv -p python3 requirements.txt
 
-           Create a python virtual environment at folder .virtualenv in the current directory.  The python used at this environment  will  be  python3.6  and  the
-       dependencies will be read from requirements.txt and dev_requirements files:
+           Create a python virtual environment at folder .pyvenv in the current directory.  The python used at this environment will be python3.6 and  the  depen‐
+       dencies will be read from requirements.txt and dev_requirements files:
 
            setup_python_venv requirements.txt dev_requirements.txt
 
-           Create a python virtual environment at folder .virtualenv in the current directory.  The python used at this environment will be python3.6 and the pro‐
-       gram will check for a requirements.txt file at current directory:
+           Create  a python virtual environment at folder .pyvenv in the current directory.  The python used at this environment will be python3.6 and the program
+       will check for a requirements.txt file at current directory:
 
            setup_python_venv
 
